@@ -307,3 +307,38 @@ export const IconoTexto = (p: PropsIcono) => (
     <path d="M3 4V2.75h10V4M8 2.75v10.5M6 13.25h4" />
   </Icono>
 )
+
+export const IconoArrastrar = (p: PropsIcono) => (
+  <Icono {...p}>
+    <circle cx="6" cy="3.5" r=".9" fill="currentColor" stroke="none" />
+    <circle cx="10" cy="3.5" r=".9" fill="currentColor" stroke="none" />
+    <circle cx="6" cy="8" r=".9" fill="currentColor" stroke="none" />
+    <circle cx="10" cy="8" r=".9" fill="currentColor" stroke="none" />
+    <circle cx="6" cy="12.5" r=".9" fill="currentColor" stroke="none" />
+    <circle cx="10" cy="12.5" r=".9" fill="currentColor" stroke="none" />
+  </Icono>
+)
+
+export const IconoPapelera = (p: PropsIcono) => (
+  <Icono {...p}>
+    <path d="M2.75 4.25h10.5M6.25 4.25V2.75h3.5v1.5M4 4.25l.6 8.6c.04.5.46.9.96.9h4.88c.5 0 .92-.4.96-.9l.6-8.6M6.75 7v4M9.25 7v4" />
+  </Icono>
+)
+
+export const IconoAlinearIzquierda = (p: PropsIcono) => (
+  <Icono {...p}>
+    <path d="M2.5 3.5h11M2.5 6.5h7M2.5 9.5h11M2.5 12.5h7" />
+  </Icono>
+)
+
+export const IconoAlinearCentro = (p: PropsIcono) => (
+  <Icono {...p}>
+    <path d="M2.5 3.5h11M4.5 6.5h7M2.5 9.5h11M4.5 12.5h7" />
+  </Icono>
+)
+
+export const IconoAlinearDerecha = (p: PropsIcono) => (
+  <Icono {...p}>
+    <path d="M2.5 3.5h11M6.5 6.5h7M2.5 9.5h11M6.5 12.5h7" />
+  </Icono>
+)
