@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { CalidadIA, PeticionGenerar, PeticionModificar, ResultadoClave, ResultadoIA } from './compartido'
+import type { CalidadIA, ObjetoGenerado, PeticionGenerar, PeticionModificar, PeticionObjetos, ResultadoClave, ResultadoIA, ResultadoObjetos } from './compartido'
 
 const MODELOS: Record<CalidadIA, string> = {
   alta: 'claude-opus-5-5',
@@ -39,9 +39,23 @@ function mensajeDeError(error: unknown): ResultadoIA {
   return { ok: false, error: error instanceof Error ? error.message : 'Error desconocido.' }
 }
 
-async function pedirDocumento(
+function pedirDocumento(
   clave: string,
   calidad: CalidadIA,
+  contenido: Anthropic.Beta.BetaContentBlockParam[],
+  alProgreso: (caracteres: number) => void,
+): Promise<ResultadoIA> {
+  return pedir(clave, calidad, INSTRUCCIONES, contenido, alProgreso)
+}
+
+function pedirTexto(clave: string, calidad: CalidadIA, sistema: string, texto: string, alProgreso: (n: number) => void): Promise<ResultadoIA> {
+  return pedir(clave, calidad, sistema, [{ type: 'text', text: texto }], alProgreso)
+}
+
+async function pedir(
+  clave: string,
+  calidad: CalidadIA,
+  sistema: string,
   contenido: Anthropic.Beta.BetaContentBlockParam[],
   alProgreso: (caracteres: number) => void,
 ): Promise<ResultadoIA> {
@@ -57,7 +71,7 @@ async function pedirDocumento(
         max_tokens: 64000,
         ...(ADMITE_RESPALDO[calidad] ? { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' as const } : {}),
         output_config: { effort: 'medium' },
-        system: INSTRUCCIONES,
+        system: sistema,
         messages: [{ role: 'user', content: contenido }],
       },
       { signal: propio.signal },
@@ -119,5 +133,50 @@ export async function validarClave(clave: string): Promise<ResultadoClave> {
   } catch (error) {
     const resultado = mensajeDeError(error)
     return { ok: false, error: resultado.ok ? 'Error desconocido.' : resultado.error }
+  }
+}
+
+const INSTRUCCIONES_OBJETOS = `Eres ilustrador. Dibujas ilustraciones vectoriales sencillas, planas y bonitas, en SVG, para decorar páginas web.
+
+Responde solo con un arreglo JSON, sin texto alrededor ni bloques de código, con este formato:
+[{"nombre": "Croissant", "svg": "<svg viewBox=\\"0 0 100 100\\" xmlns=\\"http://www.w3.org/2000/svg\\">…</svg>"}]
+
+Requisitos de cada SVG:
+- viewBox cuadrado 0 0 100 100, sin width ni height, sin texto, sin imágenes, sin scripts, sin enlaces ni recursos externos.
+- Estilo plano y limpio, de 3 a 12 figuras (path, circle, rect, ellipse, polygon). Cada parte reconocible del dibujo debe ser una figura o un <g> propio, como hijo directo del <svg>, para que el usuario pueda moverla por separado.
+- Colores: usa estas variables CSS con un color de reserva, para que el dibujo tome los colores de la página: var(--color-primario, #5468ff), var(--color-acento, #ff8a3d), var(--color-acento-suave, #ffe3d1), var(--color-texto, #1d1c1a), var(--color-superficie, #ffffff). Puedes usar opacity.
+- Los objetos deben tener que ver directamente con el tema de la página y ser variados entre sí.
+- Nombres cortos en español.`
+
+/** Dibuja objetos decorativos a juego con el tema de la página. */
+export async function generarObjetos(clave: string, peticion: PeticionObjetos, alProgreso: (n: number) => void): Promise<ResultadoObjetos> {
+  const cantidad = Math.min(8, Math.max(1, Math.round(peticion.cantidad)))
+  const resultado = await pedirTexto(
+    clave,
+    peticion.calidad,
+    INSTRUCCIONES_OBJETOS,
+    `Esta es la página que hay que decorar:
+
+<pagina>
+${peticion.descripcion.slice(0, 3000)}
+</pagina>
+
+Dibuja ${cantidad} objetos que tengan que ver con su tema.`,
+    alProgreso,
+  )
+  if (!resultado.ok) return resultado
+  const texto = resultado.html
+  const inicio = texto.indexOf('[')
+  const fin = texto.lastIndexOf(']')
+  try {
+    const datos: unknown = JSON.parse(texto.slice(inicio, fin + 1))
+    if (!Array.isArray(datos)) throw new Error('sin arreglo')
+    const objetos = datos.filter(
+      (o): o is ObjetoGenerado => typeof o === 'object' && o !== null && typeof o.nombre === 'string' && typeof o.svg === 'string' && o.svg.includes('<svg'),
+    )
+    if (objetos.length === 0) throw new Error('vacío')
+    return { ok: true, objetos }
+  } catch {
+    return { ok: false, error: 'La IA no devolvió dibujos válidos. Inténtalo de nuevo.' }
   }
 }

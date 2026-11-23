@@ -2,8 +2,8 @@ import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, safeStorage, shel
 import { mkdir, readFile, rm, rmdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CANALES, type AccionMenu, type OpcionesGuardar, type PeticionGenerar, type PeticionModificar } from './compartido'
-import { cancelar, generarDesdeImagen, modificarPagina, validarClave } from './ia'
+import { CANALES, type AccionMenu, type OpcionesGuardar, type PeticionGenerar, type PeticionModificar, type PeticionObjetos } from './compartido'
+import { cancelar, generarDesdeImagen, generarObjetos, modificarPagina, validarClave } from './ia'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -181,6 +181,12 @@ function registrarIpc() {
     const clave = await leerClave()
     if (!clave) return { ok: false, error: 'Primero configura tu clave de API.' }
     return modificarPagina(clave, peticion, (n) => evento.sender.send(CANALES.iaProgreso, n))
+  })
+
+  ipcMain.handle(CANALES.iaObjetos, async (evento, peticion: PeticionObjetos) => {
+    const clave = await leerClave()
+    if (!clave) return { ok: false, error: 'Primero configura tu clave de API.' }
+    return generarObjetos(clave, peticion, (n) => evento.sender.send(CANALES.iaProgreso, n))
   })
 
   ipcMain.handle(CANALES.iaCancelar, () => cancelar())
