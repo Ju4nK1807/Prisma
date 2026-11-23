@@ -5,8 +5,10 @@ import {
   type OpcionesGuardar,
   type PeticionGenerar,
   type PeticionModificar,
+  type PeticionObjetos,
   type ResultadoClave,
   type ResultadoIA,
+  type ResultadoObjetos,
 } from './compartido'
 
 function suscribir<T>(canal: string, oyente: (valor: T) => void) {
@@ -30,6 +32,7 @@ const api = {
     borrarClave: (): Promise<void> => ipcRenderer.invoke(CANALES.iaBorrarClave),
     generar: (peticion: PeticionGenerar): Promise<ResultadoIA> => ipcRenderer.invoke(CANALES.iaGenerar, peticion),
     modificar: (peticion: PeticionModificar): Promise<ResultadoIA> => ipcRenderer.invoke(CANALES.iaModificar, peticion),
+    objetos: (peticion: PeticionObjetos): Promise<ResultadoObjetos> => ipcRenderer.invoke(CANALES.iaObjetos, peticion),
     cancelar: (): Promise<void> => ipcRenderer.invoke(CANALES.iaCancelar),
     alProgreso: (oyente: (caracteres: number) => void) => suscribir(CANALES.iaProgreso, oyente),
   },

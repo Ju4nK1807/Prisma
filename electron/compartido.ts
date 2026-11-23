@@ -13,6 +13,7 @@ export const CANALES = {
   iaGenerar: 'ia:generar',
   iaModificar: 'ia:modificar',
   iaCancelar: 'ia:cancelar',
+  iaObjetos: 'ia:objetos',
   iaProgreso: 'ia:progreso',
 } as const
 
@@ -45,6 +46,20 @@ export interface PeticionGenerar {
   indicaciones: string
   calidad: CalidadIA
 }
+
+export interface PeticionObjetos {
+  // De qué trata la página: título y primeros textos
+  descripcion: string
+  cantidad: number
+  calidad: CalidadIA
+}
+
+export interface ObjetoGenerado {
+  nombre: string
+  svg: string
+}
+
+export type ResultadoObjetos = { ok: true; objetos: ObjetoGenerado[] } | { ok: false; error: string; cancelado?: boolean }
 
 export interface PeticionModificar {
   html: string
