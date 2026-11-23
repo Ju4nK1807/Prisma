@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { CalidadIA, ResultadoIA } from '../../electron/compartido'
+import type { CalidadIA } from '../../electron/compartido'
 import { plataforma } from '../plataforma'
 
 export const CALIDADES: { valor: CalidadIA; nombre: string; detalle: string }[] = [
@@ -30,7 +30,7 @@ export function guardarCalidadIA(calidad: CalidadIA): void {
 export interface GeneracionIA {
   activa: boolean
   caracteres: number
-  ejecutar: (tarea: () => Promise<ResultadoIA>) => Promise<ResultadoIA>
+  ejecutar: <T>(tarea: () => Promise<T>) => Promise<T>
   cancelar: () => void
 }
 
@@ -41,7 +41,7 @@ export function useGeneracionIA(): GeneracionIA {
 
   useEffect(() => plataforma?.ia.alProgreso(setCaracteres), [])
 
-  const ejecutar = useCallback(async (tarea: () => Promise<ResultadoIA>) => {
+  const ejecutar = useCallback(async <T,>(tarea: () => Promise<T>): Promise<T> => {
     setCaracteres(0)
     setActiva(true)
     try {
