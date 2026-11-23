@@ -1,0 +1,35 @@
+{
+  "name": "prisma",
+  "productName": "Prisma",
+  "version": "0.1.0",
+  "description": "Generador de sistemas de diseño: color, tipografía, espaciado y forma con vista previa en vivo y exportación a CSS, JSON y Tailwind.",
+  "author": "Prisma",
+  "private": true,
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build && electron-builder",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.5.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vite-plugin-electron": "^1.1.2",
+    "vite-plugin-electron-renderer": "^1.0.0"
+  }
+}
