@@ -1360,3 +1360,266 @@ p {
   font-size: 15px;
   font-weight: 650;
 }
+
+/* ---------- Barra flotante y arrastre ---------- */
+
+.vista-marco {
+  position: relative;
+}
+
+.barra-flotante {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 40px;
+  padding: 4px;
+  border-radius: 10px;
+  background: #1d1c1a;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  animation: aviso-entrada 120ms ease-out;
+}
+
+.barra-flotante button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  min-width: 32px;
+  justify-content: center;
+  padding: 0 8px;
+  border: none;
+  border-radius: 7px;
+  background: none;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.barra-flotante button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.barra-flotante button:disabled {
+  opacity: 0.35;
+}
+
+.barra-flotante-asa {
+  cursor: grab;
+  background: var(--acento) !important;
+}
+
+.barra-flotante-peligro:hover {
+  background: rgba(255, 95, 109, 0.3) !important;
+}
+
+.barra-flotante-separador {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.barra-flotante--arrastrando {
+  opacity: 0.4;
+}
+
+.capa-arrastre {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  cursor: grabbing;
+}
+
+.linea-destino {
+  position: absolute;
+  border-radius: 3px;
+  background: var(--acento);
+  box-shadow: 0 0 0 3px rgba(84, 104, 255, 0.25);
+  pointer-events: none;
+}
+
+.etiqueta-arrastre {
+  position: absolute;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #1d1c1a;
+  color: #ffffff;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---------- Objetos ---------- */
+
+.marco-objeto {
+  position: absolute;
+  z-index: 4;
+  border: 2px dashed var(--acento);
+  border-radius: 4px;
+  cursor: move;
+  touch-action: none;
+}
+
+.asa-tamano {
+  position: absolute;
+  right: -8px;
+  bottom: -8px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--acento);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  cursor: nwse-resize;
+}
+
+.controles-objeto {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.control-deslizante {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--texto-2);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.control-deslizante span {
+  display: flex;
+  justify-content: space-between;
+}
+
+.control-deslizante output {
+  color: var(--texto-3);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.control-deslizante input {
+  width: 100%;
+  accent-color: var(--acento);
+}
+
+.guardar-objeto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--borde);
+}
+
+.rejilla-objetos {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.opcion-objeto {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px 6px;
+  border: 1px solid var(--borde);
+  border-radius: var(--radio);
+  background: var(--superficie);
+  color: var(--texto-2);
+  font-size: 11px;
+  transition: border-color var(--transicion), background-color var(--transicion);
+}
+
+.opcion-objeto:hover {
+  border-color: var(--acento);
+  background: var(--acento-suave);
+}
+
+.opcion-objeto-dibujo {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+}
+
+.opcion-objeto-dibujo > * {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.opcion-objeto-dibujo svg,
+.opcion-objeto-dibujo img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.opcion-objeto--mio {
+  padding: 0;
+}
+
+.opcion-objeto-usar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: 8px 4px 6px;
+  border: none;
+  background: none;
+  color: inherit;
+  font-size: 11px;
+}
+
+.opcion-objeto-borrar {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: var(--peligro);
+  color: #ffffff;
+}
+
+.opcion-objeto--mio:hover .opcion-objeto-borrar {
+  display: grid;
+}
+
+.boton--ia {
+  border-color: var(--ia);
+  background: var(--ia-suave);
+  color: var(--ia);
+}
+
+.boton--ia:hover:not(:disabled) {
+  background: var(--ia);
+  color: #ffffff;
+}
+
+.color-mini--elegir {
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed var(--borde-fuerte);
+  background: var(--superficie);
+  box-shadow: none;
+  color: var(--texto-2);
+  cursor: pointer;
+}
+
+.color-mini--elegir input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
