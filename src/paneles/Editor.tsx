@@ -17,10 +17,19 @@ import {
 import { MenuCuenta } from '../controles/MenuCuenta'
 import type { Cuenta } from '../estado/cuentas'
 import { useHistorial } from '../estado/historial'
+import { borrarMiObjeto, guardarMiObjeto, leerMisObjetos } from '../estado/objetos'
 import { leerCalidadIA, type GeneracionIA } from '../estado/ia'
 import { guardarProyectoLocal, type Proyecto } from '../estado/proyecto'
 import { cssFuentesIncrustadas, cssFuentesVista } from '../logica/fuentes'
 import {
+  alinearElemento,
+  cambiarObjeto,
+  colocarLibre,
+  colorearObjeto,
+  insertarObjeto,
+  limpiarMarcado,
+  marcadoDe,
+  restablecerObjeto,
   cambiarEnlace,
   cambiarImagen,
   describirElemento,
@@ -28,8 +37,10 @@ import {
   eliminarElemento,
   insertarElemento,
   moverElemento,
+  moverElementoA,
   ocultarImagenes,
   restaurarImagenes,
+  type Colocacion,
 } from '../logica/documento'
 import {
   coloresDeHtml,
@@ -46,7 +57,7 @@ import { hexesUnicos } from '../logica/paleta'
 import { plataforma } from '../plataforma'
 import { Generando } from './Generando'
 import { Panel, type AccionesElemento } from './Panel'
-import { Vista } from './Vista'
+import { Vista, type HerramientasSeleccion } from './Vista'
 
 interface Props {
   cuenta: Cuenta
@@ -125,6 +136,7 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
   // --- Elementos: seleccionar, añadir, mover, duplicar, eliminar ---
 
   const [seleccion, setSeleccion] = useState<string | null>(null)
+  const [misObjetos, setMisObjetos] = useState(() => leerMisObjetos(cuenta.correo))
   const seleccionado = useMemo(() => (seleccion ? describirElemento(documento, seleccion) : null), [documento, seleccion])
 
   useEffect(() => {
@@ -154,10 +166,82 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
       duplicar: () => seleccion && operar((html) => duplicarElemento(html, seleccion)),
       cambiarImagen: (dataUrl) => seleccion && operar((html) => ({ html: cambiarImagen(html, seleccion, dataUrl), id: seleccion })),
       cambiarEnlace: (url) => seleccion && operar((html) => ({ html: cambiarEnlace(html, seleccion, url), id: seleccion })),
+      alinear: (alineacion) => seleccion && operar((html) => ({ html: alinearElemento(html, seleccion, alineacion), id: seleccion })),
+      cambiarObjeto: (cambio) => seleccion && operar((html) => ({ html: cambiarObjeto(html, seleccion, cambio), id: seleccion })),
+      restablecerObjeto: () => seleccion && operar((html) => ({ html: restablecerObjeto(html, seleccion), id: seleccion })),
+      anadirObjeto: (marcado) => operar((html) => insertarObjeto(html, marcado, seleccion)),
+      guardarObjeto: (nombre) => {
+        const marcado = seleccion ? marcadoDe(documentoConTextos(proyecto), seleccion) : null
+        if (!marcado) return
+        const lista = guardarMiObjeto(cuenta.correo, nombre, marcado)
+        if (lista) {
+          setMisObjetos(lista)
+          avisar(`«${nombre}» guardado en Mis objetos`)
+        } else avisar('No hay espacio para guardar este objeto', 'error')
+      },
+      borrarObjetoGuardado: (id) => setMisObjetos(borrarMiObjeto(cuenta.correo, id)),
+      colorear: (color) => seleccion && operar((html) => ({ html: colorearObjeto(html, seleccion, color), id: seleccion })),
+      seleccionar: (id) => setSeleccion(id),
       deseleccionar: () => setSeleccion(null),
     }),
-    [operar, seleccion],
+    [operar, seleccion, proyecto, cuenta.correo, avisar],
   )
+
+  // Herramientas de la barra flotante sobre el elemento seleccionado
+  const herramientas: HerramientasSeleccion | null = useMemo(
+    () =>
+      seleccionado
+        ? {
+            nombre: seleccionado.nombre,
+            puedeSubir: seleccionado.puedeSubir,
+            puedeBajar: seleccionado.puedeBajar,
+            subir: () => elementos.mover(-1),
+            bajar: () => elementos.mover(1),
+            duplicar: elementos.duplicar,
+            eliminar: elementos.eliminar,
+            esObjeto: seleccionado.esObjeto,
+            esSeccion: seleccionado.esSeccion,
+            alCambiarObjeto: elementos.cambiarObjeto,
+          }
+        : null,
+    [seleccionado, elementos],
+  )
+
+  // Al soltar un objeto arrastrado, pasa a la capa libre en esa posición
+  const colocar = useCallback(
+    (id: string, colocacion: Colocacion) => operar((html) => colocarLibre(html, id, colocacion)),
+    [operar],
+  )
+
+  const moverA = useCallback(
+    (id: string, destinoId: string, posicion: 'antes' | 'despues') =>
+      operar((html) => ({ html: moverElementoA(html, id, destinoId, posicion), id })),
+    [operar],
+  )
+
+  const [tituloIA, setTituloIA] = useState('Aplicando tu cambio')
+
+  // La IA dibuja objetos a juego con el tema de la página y se guardan en "Mis objetos"
+  const crearObjetosIA = useCallback(async () => {
+    if (!plataforma) return
+    const doc = new DOMParser().parseFromString(documentoConTextos(proyecto), 'text/html')
+    const textos = [doc.title, ...[...doc.querySelectorAll('h1, h2, h3, p, li')].map((el) => el.textContent?.trim() ?? '')]
+    const descripcion = [...new Set(textos.filter(Boolean))].join(' · ').slice(0, 3000)
+    setTituloIA('Dibujando objetos para tu página')
+    const resultado = await ia.ejecutar(() => plataforma!.ia.objetos({ descripcion, cantidad: 6, calidad: leerCalidadIA() }))
+    if (!resultado.ok) {
+      if (!resultado.cancelado) avisar(resultado.error, 'error')
+      return
+    }
+    let lista = misObjetos
+    for (const objeto of [...resultado.objetos].reverse()) {
+      const marcado = limpiarMarcado(objeto.svg)
+      if (!marcado.includes('<svg')) continue
+      lista = guardarMiObjeto(cuenta.correo, objeto.nombre.slice(0, 30), marcado) ?? lista
+    }
+    setMisObjetos(lista)
+    avisar(`${resultado.objetos.length} objetos nuevos en «Objetos de tu página»`)
+  }, [proyecto, ia, avisar, misObjetos, cuenta.correo])
 
   const pedirCambio = useCallback(
     async (peticion: string) => {
@@ -167,6 +251,7 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
       ponerEstilo(doc, ID_ESTILO_TEMA, cssTema(proyecto))
       const { html, imagenes } = ocultarImagenes(`<!doctype html>\n${doc.documentElement.outerHTML}`)
       const foco = seleccionado && seleccion ? `\n\nEl usuario se refiere sobre todo a este elemento (${seleccionado.nombre.toLowerCase()}): data-prisma-id="${seleccion}".` : ''
+      setTituloIA('Aplicando tu cambio')
       const resultado = await ia.ejecutar(() =>
         plataforma!.ia.modificar({ html, peticion: `${peticion}${foco}`, calidad: leerCalidadIA() }),
       )
@@ -193,13 +278,29 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
   )
 
   // Atajos de teclado, tanto en la app como dentro de la vista previa
-  const acciones = useRef({ deshacer: historial.deshacer, rehacer: historial.rehacer, exportar, alNuevo })
-  acciones.current = { deshacer: historial.deshacer, rehacer: historial.rehacer, exportar, alNuevo }
+  const acciones = useRef({ deshacer: historial.deshacer, rehacer: historial.rehacer, exportar, alNuevo, herramientas })
+  acciones.current = { deshacer: historial.deshacer, rehacer: historial.rehacer, exportar, alNuevo, herramientas }
 
   const manejarTecla = useCallback((evento: KeyboardEvent) => {
+    const a = acciones.current
+    // Alt + flechas mueve el elemento seleccionado
+    if (evento.altKey && !evento.ctrlKey && !evento.metaKey && a.herramientas) {
+      if (evento.key === 'ArrowUp' && a.herramientas.puedeSubir) a.herramientas.subir()
+      else if (evento.key === 'ArrowDown' && a.herramientas.puedeBajar) a.herramientas.bajar()
+      else return
+      evento.preventDefault()
+      return
+    }
+    // Supr elimina lo seleccionado, salvo mientras se escribe en un campo
+    const objetivo = evento.target as HTMLElement | null
+    const enCampo = !!objetivo && (objetivo.tagName === 'INPUT' || objetivo.tagName === 'TEXTAREA' || objetivo.isContentEditable)
+    if ((evento.key === 'Delete' || evento.key === 'Backspace') && !evento.ctrlKey && !evento.metaKey && a.herramientas && !enCampo) {
+      evento.preventDefault()
+      a.herramientas.eliminar()
+      return
+    }
     if (!(evento.ctrlKey || evento.metaKey) || evento.altKey) return
     const tecla = evento.key.toLowerCase()
-    const a = acciones.current
     if (tecla === 'z') evento.shiftKey ? a.rehacer() : a.deshacer()
     else if (tecla === 'y') a.rehacer()
     else if (tecla === 'e') void a.exportar()
@@ -290,6 +391,9 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
             ancho={ANCHOS[dispositivo]}
             seleccion={seleccion}
             alSeleccionar={setSeleccion}
+            herramientas={herramientas}
+            alMover={moverA}
+            alColocar={colocar}
             alEditarTexto={editarTexto}
             alTecla={manejarTecla}
           />
@@ -299,6 +403,8 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
             proyecto={proyecto}
             actualizar={historial.aplicar}
             seleccionado={seleccionado}
+            misObjetos={misObjetos}
+            alCrearObjetosIA={() => void crearObjetosIA()}
             elementos={elementos}
             iaDisponible={iaDisponible}
             alPedirCambio={(p) => void pedirCambio(p)}
@@ -307,7 +413,7 @@ export function Editor({ cuenta, inicial, ia, iaDisponible, alNuevo, alConfigura
         </aside>
       </div>
 
-      {ia.activa && <Generando titulo="Aplicando tu cambio" caracteres={ia.caracteres} alCancelar={ia.cancelar} />}
+      {ia.activa && <Generando titulo={tituloIA} caracteres={ia.caracteres} alCancelar={ia.cancelar} />}
 
       {exportada && (
         <Dialogo titulo="¡Tu página está lista!" alCerrar={() => setExportada(null)}>

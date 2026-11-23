@@ -16,7 +16,8 @@ import { Segmentado } from '../controles/Segmentado'
 import type { Proyecto } from '../estado/proyecto'
 import { normalizarHex } from '../logica/color'
 import { armonias, BIBLIOTECA, PALETAS_SUGERIDAS } from '../logica/colores'
-import { ELEMENTOS, type DescripcionElemento, type TipoElemento } from '../logica/documento'
+import { ELEMENTOS, type Alineacion, type DescripcionElemento, type EstiloObjeto, type TipoElemento } from '../logica/documento'
+import { FORMAS, type ObjetoGuardado } from '../estado/objetos'
 import { cargarImagen, TIPOS_ACEPTADOS } from '../logica/imagen'
 import { ETIQUETAS_DENSIDAD, ETIQUETAS_ESQUINAS } from '../logica/pagina'
 import { hexesUnicos } from '../logica/paleta'
@@ -42,6 +43,14 @@ export interface AccionesElemento {
   duplicar: () => void
   cambiarImagen: (dataUrl: string) => void
   cambiarEnlace: (url: string) => void
+  alinear: (alineacion: Alineacion) => void
+  cambiarObjeto: (cambio: Partial<EstiloObjeto>) => void
+  restablecerObjeto: () => void
+  anadirObjeto: (marcado: string) => void
+  guardarObjeto: (nombre: string) => void
+  borrarObjetoGuardado: (id: string) => void
+  colorear: (color: string) => void
+  seleccionar: (id: string) => void
   deseleccionar: () => void
 }
 
@@ -49,6 +58,8 @@ interface Props {
   proyecto: Proyecto
   actualizar: Actualizar
   seleccionado: DescripcionElemento | null
+  misObjetos: ObjetoGuardado[]
+  alCrearObjetosIA: () => void
   elementos: AccionesElemento
   iaDisponible: boolean
   alPedirCambio: (peticion: string) => void
@@ -87,7 +98,8 @@ const ORIGINAL = 'original'
 const MAXIMO_COLORES = 12
 
 export function Panel(props: Props) {
-  const { proyecto, actualizar, seleccionado, elementos, iaDisponible, alPedirCambio, alConfigurarClave } = props
+  const { proyecto, actualizar, seleccionado, misObjetos, elementos, iaDisponible, alPedirCambio, alConfigurarClave, alCrearObjetosIA } = props
+  const [nombreObjeto, setNombreObjeto] = useState('')
   const { avisar } = useAvisos()
   const [papelActivo, setPapelActivo] = useState<Papel>('primario')
   const [peticion, setPeticion] = useState('')
@@ -213,6 +225,84 @@ export function Panel(props: Props) {
               Eliminar
             </button>
           </div>
+          {seleccionado.esTexto && (
+            <Segmentado
+              etiqueta="Alineación del texto"
+              opciones={[
+                { valor: 'left', etiqueta: 'Izquierda' },
+                { valor: 'center', etiqueta: 'Centro' },
+                { valor: 'right', etiqueta: 'Derecha' },
+              ]}
+              valor={seleccionado.alineacion ?? 'left'}
+              alCambiar={(v) => elementos.alinear(v as Alineacion)}
+            />
+          )}
+          {seleccionado.esObjeto && (
+            <div className="controles-objeto">
+              <p className="tenue pequeno">Arrástralo a cualquier parte de la página; la esquina azul cambia su tamaño. Si hay algo encima, haz clic otra vez en el mismo punto.</p>
+              {seleccionado.dibujo && (
+                <button className="boton" onClick={() => seleccionado.dibujo && elementos.seleccionar(seleccionado.dibujo)}>
+                  Seleccionar todo el dibujo
+                </button>
+              )}
+              <span className="campo-etiqueta">Color</span>
+              <div className="fila-colores">
+                {proyecto.paleta.map((hex) => (
+                  <button key={hex} className="color-mini" style={{ background: hex }} title={hex} onClick={() => elementos.colorear(hex)} />
+                ))}
+                <label className="color-mini color-mini--elegir" title="Elegir cualquier color">
+                  <IconoMas tamano={12} />
+                  <input type="color" aria-label="Elegir cualquier color" onChange={(e) => elementos.colorear(e.target.value)} />
+                </label>
+              </div>
+              <ControlDeslizante
+                etiqueta="Tamaño"
+                min={15}
+                max={600}
+                valor={Math.round(seleccionado.objeto.escala * 100)}
+                unidad="%"
+                alConfirmar={(v) => elementos.cambiarObjeto({ escala: v / 100 })}
+              />
+              <ControlDeslizante
+                etiqueta="Girar"
+                min={-180}
+                max={180}
+                valor={Math.round(seleccionado.objeto.giro)}
+                unidad="°"
+                alConfirmar={(v) => elementos.cambiarObjeto({ giro: v })}
+              />
+              <div className="acciones-elemento">
+                <button className="boton" onClick={() => elementos.cambiarObjeto({ capa: Math.max(seleccionado.objeto.capa, 0) + 1 })}>
+                  Al frente
+                </button>
+                <button className="boton" onClick={() => elementos.cambiarObjeto({ capa: Math.min(seleccionado.objeto.capa, 0) - 1 })}>
+                  Al fondo
+                </button>
+              </div>
+              <button className="boton boton--fantasma" onClick={elementos.restablecerObjeto}>
+                <IconoReiniciar />
+                {seleccionado.libre ? 'Quitar giro y tamaño' : 'Volver a su sitio y tamaño'}
+              </button>
+              <div className="guardar-objeto">
+                <input
+                  className="campo"
+                  value={nombreObjeto}
+                  placeholder="Nombre (ej. Botella)"
+                  maxLength={30}
+                  onChange={(e) => setNombreObjeto(e.target.value)}
+                />
+                <button
+                  className="boton"
+                  onClick={() => {
+                    elementos.guardarObjeto(nombreObjeto.trim() || 'Mi objeto')
+                    setNombreObjeto('')
+                  }}
+                >
+                  Guardar en mis objetos
+                </button>
+              </div>
+            </div>
+          )}
           {seleccionado.esImagen && (
             <button className="boton" onClick={() => elegirImagen('reemplazar')}>
               <IconoImagen />
@@ -252,6 +342,45 @@ export function Panel(props: Props) {
             >
               <IconoMas tamano={14} />
               {e.nombre}
+            </button>
+          ))}
+        </div>
+      </Bloque>
+
+      <Bloque titulo="Objetos">
+        <p className="tenue pequeno">Dibujos para decorar. Después puedes moverlos, agrandarlos, girarlos y cambiarles el color.</p>
+        {iaDisponible ? (
+          <button className="boton boton--ia" onClick={alCrearObjetosIA}>
+            <IconoVarita />
+            Crear objetos para mi página
+          </button>
+        ) : (
+          <p className="tenue pequeno">Con una clave de IA, Prisma puede dibujar objetos a juego con el tema de tu página.</p>
+        )}
+        <span className="campo-etiqueta">Objetos de tu página</span>
+        {misObjetos.length === 0 ? (
+          <p className="tenue pequeno">Aquí aparecen los objetos que crea la IA y los que guardas tú desde la página.</p>
+        ) : (
+          <div className="rejilla-objetos">
+            {misObjetos.map((o) => (
+              <div key={o.id} className="opcion-objeto opcion-objeto--mio">
+                <button className="opcion-objeto-usar" title={`Añadir ${o.nombre}`} onClick={() => elementos.anadirObjeto(o.marcado)}>
+                  <span className="opcion-objeto-dibujo" dangerouslySetInnerHTML={{ __html: o.marcado }} />
+                  <span>{o.nombre}</span>
+                </button>
+                <button className="opcion-objeto-borrar" aria-label={`Borrar ${o.nombre}`} title="Quitar de la colección" onClick={() => elementos.borrarObjetoGuardado(o.id)}>
+                  <IconoCerrar tamano={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+        <span className="campo-etiqueta">Formas básicas</span>
+        <div className="rejilla-objetos">
+          {FORMAS.map((o) => (
+            <button key={o.id} className="opcion-objeto" title={o.nombre} onClick={() => elementos.anadirObjeto(o.marcado)}>
+              <span className="opcion-objeto-dibujo" dangerouslySetInnerHTML={{ __html: o.marcado }} />
+              <span>{o.nombre}</span>
             </button>
           ))}
         </div>
@@ -502,5 +631,42 @@ export function Panel(props: Props) {
         )}
       </Bloque>
     </div>
+  )
+}
+
+interface PropsDeslizante {
+  etiqueta: string
+  min: number
+  max: number
+  valor: number
+  unidad: string
+  alConfirmar: (valor: number) => void
+}
+
+/** Deslizador que aplica el cambio al soltar: así cada ajuste es un solo paso de deshacer. */
+function ControlDeslizante({ etiqueta, min, max, valor, unidad, alConfirmar }: PropsDeslizante) {
+  const [borrador, setBorrador] = useState(valor)
+  useEffect(() => setBorrador(valor), [valor])
+  const confirmar = () => borrador !== valor && alConfirmar(borrador)
+  return (
+    <label className="control-deslizante">
+      <span>
+        {etiqueta}
+        <output>
+          {borrador}
+          {unidad}
+        </output>
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={borrador}
+        onChange={(e) => setBorrador(Number(e.target.value))}
+        onPointerUp={confirmar}
+        onKeyUp={confirmar}
+        onBlur={confirmar}
+      />
+    </label>
   )
 }
