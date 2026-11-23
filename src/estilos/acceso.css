@@ -1,0 +1,783 @@
+/* Pantalla de inicio de sesión: fondo con auroras, prisma animado y tarjeta de cristal */
+
+.acceso {
+  --acceso-fondo: #07071a;
+  --acceso-texto: #f4f4ff;
+  --acceso-texto-2: rgba(232, 232, 255, 0.68);
+  --acceso-borde: rgba(255, 255, 255, 0.14);
+  --acceso-campo: rgba(255, 255, 255, 0.06);
+  --acceso-acento: #7b8cff;
+  --acceso-error: #ff8a95;
+
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: center;
+  height: 100%;
+  overflow: hidden;
+  background: var(--acceso-fondo);
+  color: var(--acceso-texto);
+  color-scheme: dark;
+}
+
+/* ---------- Fondo ---------- */
+
+.acceso-fondo {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.aurora {
+  position: absolute;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.55;
+  mix-blend-mode: screen;
+}
+
+.aurora--1 {
+  top: -25vmax;
+  left: -15vmax;
+  background: radial-gradient(circle, #5b45ff 0%, transparent 65%);
+  animation: aurora-a 22s ease-in-out infinite alternate;
+}
+
+.aurora--2 {
+  right: -20vmax;
+  bottom: -30vmax;
+  background: radial-gradient(circle, #ff4f9a 0%, transparent 65%);
+  animation: aurora-b 26s ease-in-out infinite alternate;
+}
+
+.aurora--3 {
+  top: 20%;
+  left: 35%;
+  width: 45vmax;
+  height: 45vmax;
+  background: radial-gradient(circle, #19c3d9 0%, transparent 65%);
+  opacity: 0.35;
+  animation: aurora-c 30s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-a {
+  to {
+    transform: translate(18vmax, 12vmax) scale(1.15);
+  }
+}
+
+@keyframes aurora-b {
+  to {
+    transform: translate(-16vmax, -10vmax) scale(1.2);
+  }
+}
+
+@keyframes aurora-c {
+  to {
+    transform: translate(-14vmax, 14vmax) scale(0.85);
+  }
+}
+
+.acceso-rejilla {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%);
+  animation: rejilla 40s linear infinite;
+}
+
+@keyframes rejilla {
+  to {
+    background-position: 56px 56px;
+  }
+}
+
+/* Formas pequeñas que suben despacio, como partículas de luz */
+.flotante {
+  position: absolute;
+  bottom: -40px;
+  left: var(--x);
+  width: 10px;
+  height: 10px;
+  opacity: 0;
+  animation: flotar var(--duracion) linear infinite;
+  animation-delay: var(--retraso);
+}
+
+.flotante--0 {
+  border-radius: 50%;
+  background: rgba(123, 140, 255, 0.7);
+}
+
+.flotante--1 {
+  width: 0;
+  height: 0;
+  border-right: 7px solid transparent;
+  border-bottom: 12px solid rgba(255, 95, 109, 0.6);
+  border-left: 7px solid transparent;
+}
+
+.flotante--2 {
+  width: 8px;
+  height: 8px;
+  border: 1.5px solid rgba(61, 220, 151, 0.7);
+  border-radius: 2px;
+}
+
+@keyframes flotar {
+  10% {
+    opacity: 0.9;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-110vh) rotate(540deg);
+  }
+}
+
+/* ---------- Escena del prisma ---------- */
+
+.acceso-escena {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 48px 0 72px;
+  animation: entrar-izquierda 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.escena-prisma {
+  width: min(560px, 100%);
+  margin-bottom: 8px;
+  overflow: visible;
+}
+
+.rayo-entrada {
+  fill: none;
+  stroke: #ffffff;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 260;
+  stroke-dashoffset: 260;
+  animation: dibujar 700ms 200ms ease-out forwards, pulso-blanco 3s 1s ease-in-out infinite;
+}
+
+.rayo-salida {
+  fill: none;
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 300;
+  stroke-dashoffset: 300;
+  animation: dibujar 800ms var(--retraso) ease-out forwards, destello 3s calc(var(--retraso) + 1s) ease-in-out infinite;
+}
+
+@keyframes dibujar {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulso-blanco {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes destello {
+  50% {
+    opacity: 0.45;
+    stroke-width: 9;
+  }
+}
+
+.prisma-cuerpo {
+  transform-origin: 320px 230px;
+  animation: aparecer-prisma 900ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both, levitar 5s 1s ease-in-out infinite;
+}
+
+@keyframes aparecer-prisma {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-8deg);
+  }
+}
+
+@keyframes levitar {
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.prisma-brillo {
+  animation: barrer-brillo 3.2s 1.2s ease-in-out infinite;
+}
+
+@keyframes barrer-brillo {
+  from {
+    transform: translateX(-120px);
+  }
+  60%,
+  to {
+    transform: translateX(320px);
+  }
+}
+
+.acceso-lema {
+  margin: 0;
+  font-size: clamp(32px, 3.6vw, 52px);
+  font-weight: 750;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.acceso-palabra {
+  display: inline-block;
+  background: linear-gradient(90deg, #ff5f6d, #ffd23f, #3ddc97, #4cc9f0, #7b61ff, #ff5f6d);
+  background-size: 300% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: palabra-entra 500ms cubic-bezier(0.2, 0.9, 0.3, 1.2) both, arcoiris 6s linear infinite;
+}
+
+@keyframes palabra-entra {
+  from {
+    opacity: 0;
+    filter: blur(6px);
+    transform: translateY(14px);
+  }
+}
+
+@keyframes arcoiris {
+  to {
+    background-position: 300% 0;
+  }
+}
+
+.acceso-sublema {
+  max-width: 440px;
+  margin: 18px 0 0;
+  color: var(--acceso-texto-2);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+/* ---------- Tarjeta ---------- */
+
+.acceso-lado {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  padding: 32px 56px 32px 24px;
+}
+
+.acceso-tarjeta {
+  position: relative;
+  width: min(420px, 100%);
+  padding: 32px 32px 24px;
+  border-radius: 24px;
+  background: rgba(18, 18, 44, 0.55);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(22px) saturate(140%);
+  animation: entrar-tarjeta 900ms 150ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Borde con los colores del espectro que gira lentamente */
+.acceso-tarjeta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--giro, 0deg), #7b61ff, #4cc9f0, #3ddc97, #ffd23f, #ff5f6d, #7b61ff);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.75;
+  animation: girar-borde 8s linear infinite;
+  pointer-events: none;
+}
+
+@property --giro {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes girar-borde {
+  to {
+    --giro: 360deg;
+  }
+}
+
+@keyframes entrar-tarjeta {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+  }
+}
+
+@keyframes entrar-izquierda {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+}
+
+.acceso-tarjeta--temblor {
+  animation: acceso-temblor 420ms cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+@keyframes acceso-temblor {
+  20%,
+  60% {
+    transform: translateX(-10px);
+  }
+  40%,
+  80% {
+    transform: translateX(10px);
+  }
+}
+
+.acceso-marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.acceso-marca strong {
+  display: block;
+  font-size: 20px;
+}
+
+.acceso-marca span {
+  color: var(--acceso-texto-2);
+  font-size: 13.5px;
+}
+
+.acceso-logo {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #5b45ff, #4cc9f0);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(91, 69, 255, 0.45);
+}
+
+/* Pestañas con indicador deslizante */
+.acceso-pestanas {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 22px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.acceso-pestanas button {
+  position: relative;
+  z-index: 1;
+  height: 38px;
+  border: none;
+  background: none;
+  color: var(--acceso-texto-2);
+  font-weight: 600;
+  transition: color 200ms ease;
+}
+
+.acceso-pestanas button[aria-selected='true'] {
+  color: var(--acceso-texto);
+}
+
+.acceso-pestanas-indicador {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+  transition: transform 350ms cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.acceso-pestanas[data-modo='registro'] .acceso-pestanas-indicador {
+  transform: translateX(100%);
+}
+
+/* ---------- Formulario ---------- */
+
+.acceso-formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.acceso-formulario > * {
+  animation: aparecer-campo 500ms calc(var(--orden, 0) * 70ms + 300ms) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes aparecer-campo {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+.acceso-campo {
+  position: relative;
+  display: block;
+}
+
+.acceso-campo input {
+  width: 100%;
+  height: 56px;
+  padding: 22px 16px 6px;
+  border: 1px solid var(--acceso-borde);
+  border-radius: 14px;
+  background: var(--acceso-campo);
+  color: var(--acceso-texto);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.acceso-campo input:focus {
+  border-color: var(--acceso-acento);
+  background: rgba(123, 140, 255, 0.08);
+  box-shadow: 0 0 0 4px rgba(123, 140, 255, 0.18);
+}
+
+/* Etiqueta flotante: dentro del campo hasta que hay foco o texto */
+.acceso-campo > span {
+  position: absolute;
+  top: 18px;
+  left: 17px;
+  color: var(--acceso-texto-2);
+  font-size: 15px;
+  pointer-events: none;
+  transform-origin: left top;
+  transition: transform 200ms ease, color 200ms ease;
+}
+
+.acceso-campo input:focus + span,
+.acceso-campo input:not(:placeholder-shown) + span {
+  color: var(--acceso-acento);
+  transform: translateY(-10px) scale(0.78);
+}
+
+.acceso-campo--error input {
+  border-color: var(--acceso-error);
+}
+
+.acceso-campo--error > span {
+  color: var(--acceso-error) !important;
+}
+
+.acceso-ojo {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--acceso-texto-2);
+  transform: translateY(-50%);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.acceso-ojo:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--acceso-texto);
+}
+
+.acceso-fuerza {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--acceso-texto-2);
+  font-size: 12.5px;
+}
+
+.acceso-fuerza-barras {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+}
+
+.acceso-fuerza-barras span {
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: background-color 300ms ease, transform 300ms ease;
+}
+
+.acceso-fuerza[data-nivel='1'] span:nth-child(-n + 1) {
+  background: #ff5f6d;
+}
+
+.acceso-fuerza[data-nivel='2'] span:nth-child(-n + 2) {
+  background: #ffb23f;
+}
+
+.acceso-fuerza[data-nivel='3'] span:nth-child(-n + 3) {
+  background: #3ddc97;
+}
+
+.acceso-fuerza[data-nivel='4'] span {
+  background: #4cc9f0;
+  box-shadow: 0 0 10px rgba(76, 201, 240, 0.6);
+}
+
+.acceso-recordar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--acceso-texto-2);
+  font-size: 13.5px;
+  cursor: pointer;
+}
+
+.acceso-recordar input {
+  position: absolute;
+  opacity: 0;
+}
+
+.acceso-casilla {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--acceso-borde);
+  border-radius: 6px;
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+
+.acceso-casilla::after {
+  content: '';
+  width: 5px;
+  height: 10px;
+  margin-top: -2px;
+  border: solid #ffffff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform 200ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+.acceso-recordar input:checked + .acceso-casilla {
+  border-color: var(--acceso-acento);
+  background: var(--acceso-acento);
+}
+
+.acceso-recordar input:checked + .acceso-casilla::after {
+  transform: rotate(45deg) scale(1);
+}
+
+.acceso-recordar input:focus-visible + .acceso-casilla {
+  box-shadow: 0 0 0 3px rgba(123, 140, 255, 0.4);
+}
+
+.acceso-error {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 95, 109, 0.12);
+  color: var(--acceso-error);
+  font-size: 13.5px;
+  font-weight: 550;
+  animation: aparecer-campo 300ms ease both;
+}
+
+.acceso-enviar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 54px;
+  margin-top: 4px;
+  overflow: hidden;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(110deg, #5b45ff, #7b61ff 40%, #4cc9f0);
+  background-size: 200% 100%;
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 10px 30px rgba(91, 69, 255, 0.45);
+  transition: background-position 500ms ease, transform 150ms ease, box-shadow 200ms ease;
+}
+
+.acceso-enviar:hover:not(:disabled) {
+  background-position: 100% 0;
+  box-shadow: 0 14px 36px rgba(76, 201, 240, 0.4);
+  transform: translateY(-1px);
+}
+
+.acceso-enviar:active:not(:disabled) {
+  transform: translateY(1px) scale(0.99);
+}
+
+.acceso-enviar-brillo {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: brillo-boton 3.5s 1.5s ease-in-out infinite;
+}
+
+@keyframes brillo-boton {
+  40%,
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.acceso-cargando {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: girar 700ms linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.acceso-cambio {
+  margin: 20px 0 6px;
+  color: var(--acceso-texto-2);
+  font-size: 14px;
+  text-align: center;
+}
+
+.acceso-cambio button {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--acceso-acento);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.acceso-nota {
+  margin: 0;
+  color: rgba(232, 232, 255, 0.4);
+  font-size: 12px;
+  text-align: center;
+}
+
+.acceso :focus-visible {
+  outline: 2px solid var(--acceso-acento);
+  outline-offset: 2px;
+}
+
+/* ---------- Salida: estallido de colores y la escena se aleja ---------- */
+
+.acceso--saliendo .acceso-tarjeta {
+  animation: salir-tarjeta 700ms 150ms cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+
+.acceso--saliendo .acceso-escena {
+  animation: salir-escena 800ms cubic-bezier(0.6, 0, 0.8, 0.4) forwards;
+}
+
+.acceso--saliendo .acceso-fondo {
+  animation: desvanecer 900ms ease forwards;
+}
+
+@keyframes salir-tarjeta {
+  to {
+    opacity: 0;
+    filter: blur(8px);
+    transform: scale(1.12);
+  }
+}
+
+@keyframes salir-escena {
+  to {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.95);
+  }
+}
+
+@keyframes desvanecer {
+  to {
+    opacity: 0;
+  }
+}
+
+.acceso-estallido {
+  position: absolute;
+  top: 50%;
+  left: calc(50% - 16px);
+  pointer-events: none;
+}
+
+.acceso-estallido span {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color);
+  box-shadow: 0 0 14px var(--color);
+  animation: estallar 850ms cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes estallar {
+  from {
+    transform: rotate(var(--angulo)) translateX(0) scale(1.4);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(var(--angulo)) translateX(var(--distancia)) scale(0.2);
+  }
+}
+
+@media (max-width: 1100px) {
+  .acceso {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .acceso-escena {
+    padding: 0 24px 0 40px;
+  }
+}
+
+/* Con la reducción de movimiento del sistema activada, todo aparece sin animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .acceso *,
+  .acceso *::before,
+  .acceso *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+
+  .flotante {
+    display: none;
+  }
+}
